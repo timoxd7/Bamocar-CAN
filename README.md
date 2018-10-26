@@ -34,4 +34,4 @@
     void setRxID(unsigned short rxID);
 
 ### Not needed if using own CAN-Service
-void listenCAN();
+    void listenCAN();
