@@ -1,6 +1,9 @@
 # Bamocar-CAN
 ## CAN Interface for Motor Controller
 
+### Bamocar Object
+    Bamocar motorController();
+
 ### Initialize library
     void startCAN();
 
