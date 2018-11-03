@@ -1,6 +1,9 @@
 #ifndef Bamocar_registers_h
 #define Bamocar_registers_h
 
+#define STD_RX_ID        0x201    //The ID the MC will listen on
+#define STD_BAUD_RATE   100000    //Standard Baudrate
+
 #define REG_N_ACTUAL      0x30    //RPM actual
 #define REG_N_CMD         0x31    //RPM command
 #define REG_N_MAX         0xC8    //(SPEED_RPMMAX) Maximum rotation speed in turns per minute (Servo)

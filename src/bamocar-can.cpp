@@ -1,32 +1,14 @@
 #include "bamocar-can.h"
-#include "bamocar-registers.h"
-#include "mbed.h"
-
-/**
- * ==========
- * Bamocar
- * ==========
- */
-Bamocar::Bamocar()
-{
-    //sets rx address to bamocar controller default
-    m_rxID = 0x201;
-}
-
-CAN can1(PB_8, PB_9);
-CAN can2(PB_5, PB_6); // (rd, td)
-CANMessage recieveMsg;
-CANMessage sendMsg;
 
 /**
  * ==========
  * Bamocar::startCAN
  * ==========
  */
-void Bamocar::startCAN()
+void Bamocar::initCAN()
 {
-    can1.frequency(100000);
-    can2.frequency(100000);
+    _canReceive.frequency(_m_baudrate);
+    _canTransmit.frequency(_m_baudrate);
     printf("CAN init ok!\r\n");
 }
 
@@ -35,8 +17,8 @@ void Bamocar::startCAN()
  * Bamocar::setRxID
  * ==========
  */
-void Bamocar::setRxID(unsigned short rxID){
-    m_rxID = rxID;
+void Bamocar::setRxID(uint8_t rxID){
+    _m_rxID = rxID;
 }
 
 /**
@@ -44,18 +26,22 @@ void Bamocar::setRxID(unsigned short rxID){
  * Bamocar::sendCAN
  * ==========
  */
-void Bamocar::sendCAN(char stmp[])
+void Bamocar::sendCAN(M_data m_data)
 {
-    sendMsg.data[0] = stmp[0];
-    sendMsg.data[1] = stmp[1];
-    sendMsg.data[2] = stmp[2]; 
-    sendMsg.id = m_rxID;
-    sendMsg.len = 0x03;
+    CANMessage sendMsg = CANMessage();
+
+    for(uint8_t i = 0; i < m_data.length(); i++)
+    {
+        sendMsg.data[i] = m_data.get(i);
+    }
+
+    sendMsg.id = _m_rxID;
+    sendMsg.len = m_data.length();
     sendMsg.format = CANStandard;
-    if (can1.write(sendMsg))
+    if (_canTransmit.write(sendMsg))
     {
         printf("loop send()\r\n");
-        printf("Message sent: %x %x %x\r\n", stmp[0],stmp[1], stmp[2]);
+        printf("Message sent: %x %x %x\r\n", m_data.get(0), m_data.get(1), m_data.get(2));
     }
 }
 
@@ -66,91 +52,76 @@ void Bamocar::sendCAN(char stmp[])
  */
 void Bamocar::listenCAN()
 {
-    if (can2.read(recieveMsg))
+    CANMessage receiveMsg = CANMessage();
+
+    if (_canReceive.read(receiveMsg))
     {
-        printf("Message received: %x %x %x %x %x %x, from %d\r\n", recieveMsg.data[0], recieveMsg.data[1], recieveMsg.data[2], recieveMsg.data[3], recieveMsg.data[4], recieveMsg.data[5], recieveMsg.id);
+        printf("Message received: %x %x %x %x %x %x, from %d\r\n", receiveMsg.data[0], receiveMsg.data[1], receiveMsg.data[2], receiveMsg.data[3], receiveMsg.data[4], receiveMsg.data[5], receiveMsg.id);
     }
 }
 
-void Bamocar::getSpeed(char interval)
+//----------------------------------------------------------------------------------------------
+
+void Bamocar::getSpeed(uint8_t interval)
 {
-    m_data[0] = REG_REQUEST;
-    m_data[1] = REG_N_ACTUAL;
-    m_data[2] = interval;
-    sendCAN(m_data);
+    sendCAN(M_data(REG_REQUEST, REG_N_ACTUAL, interval));
 }
-void Bamocar::setSpeed(unsigned int speed)
+
+void Bamocar::setSpeed(uint16_t speed)
 {
-    m_data[0] = REG_N_CMD;
-    m_data[1] = speed & 0xFF; 
-    m_data[2] = speed >> 8;
-    sendCAN(m_data);
+    sendCAN(M_data(REG_N_CMD, (speed & 0xFF), (speed >> 8)));
 }
-void Bamocar::setAccel(unsigned int period)
+
+void Bamocar::setAccel(uint16_t period)
 {
-    m_data[0] = REG_RAMP_ACC;
-    m_data[1] = period & 0xFF; 
-    m_data[2] = period >> 8;
-    sendCAN(m_data);
+    sendCAN(M_data(REG_RAMP_ACC, (period & 0xFF), (period >> 8)));
 }
-void Bamocar::setDecel(unsigned int period)
+
+void Bamocar::setDecel(uint16_t period)
 {
-    m_data[0] = REG_RAMP_DEC;
-    m_data[1] = period & 0xFF; 
-    m_data[2] = period >> 8;
-    sendCAN(m_data);
+    sendCAN(M_data(REG_RAMP_DEC, (period & 0xFF), (period >> 8)));
 }
-void Bamocar::setTorque(unsigned int torque)
+
+void Bamocar::setTorque(uint16_t torque)
 {
-    m_data[0] = REG_TORQUE_CMD;
-    m_data[1] = torque & 0xFF; 
-    m_data[2] = torque >> 8;
-    sendCAN(m_data);
+    sendCAN(M_data(REG_TORQUE_CMD, (torque & 0xFF), (torque >> 8)));
 }
-void Bamocar::getCurrent(char interval)
+
+void Bamocar::getCurrent(uint8_t interval)
 {
-    m_data[0] = REG_REQUEST;
-    m_data[1] = REG_I_ACTUAL;
-    m_data[2] = interval;
-    sendCAN(m_data);
+    sendCAN(M_data(REG_REQUEST, REG_I_ACTUAL, interval));
 }
-void Bamocar::getCurrentDevice(char interval)
+
+void Bamocar::getCurrentDevice(uint8_t interval)
 {
-    m_data[0] = REG_REQUEST;
-    m_data[1] = REG_I_DEVICE;
-    m_data[2] = interval;
-    sendCAN(m_data);
+    sendCAN(M_data(REG_REQUEST, REG_I_DEVICE, interval));
 }
-void Bamocar::getMotorTemp(char interval)
+
+void Bamocar::getMotorTemp(uint8_t interval)
 {
-    m_data[0] = REG_REQUEST;
-    m_data[1] = REG_TEMP_MOTOR;
-    m_data[2] = interval;
-    sendCAN(m_data);
+    sendCAN(M_data(REG_REQUEST, REG_TEMP_MOTOR, interval));
 }
-void Bamocar::getStatus(char interval)
+
+void Bamocar::getStatus(uint8_t interval)
 {
-    m_data[0] = REG_REQUEST;
-    m_data[1] = 0xE2;
-    m_data[2] = interval;
-    sendCAN(m_data);
+    sendCAN(M_data(REG_REQUEST, 0xE2, interval));
 }
+
 void Bamocar::setSoftEnable(bool enable)
 {
-    m_data[0] = REG_ENABLE;
+    uint8_t m_data2 = 0;
+
     if (enable){
-        m_data[1] = 0x00;
+        m_data2 = 0x00;
     }
     else{
-        m_data[1] = 0x04;
+        m_data2 = 0x04;
     }
-    m_data[2] = 0x00;
-    sendCAN(m_data);
+
+    sendCAN(M_data(REG_ENABLE, m_data2, 0x00));
 }
-void Bamocar::getHardEnable(char interval)
+
+void Bamocar::getHardEnable(uint8_t interval)
 {
-    m_data[0] = REG_REQUEST;
-    m_data[1] = 0xE8; //consider defining a register
-    m_data[2] = interval;
-    sendCAN(m_data);
+    sendCAN(M_data(REG_REQUEST, 0xE8, interval));
 }
