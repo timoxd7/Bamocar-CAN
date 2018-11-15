@@ -19,7 +19,7 @@
 
 #define REG_REQUEST       0x3D    //Transmission request
 
-#define REG_ENABLE        0x51     //Disable or Enable transmission
+#define REG_ENABLE        0x51    //Disable or Enable transmission
 
 #define REG_STATUS        0x40    //Status of device
 
