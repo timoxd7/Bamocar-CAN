@@ -2,6 +2,7 @@
 #define Bamocar_registers_h
 
 #define STD_RX_ID        0x201    //The ID the MC will listen on
+#define STD_TX_ID        0x181    //The ID the MC will answer with
 #define STD_BAUD_RATE   100000    //Standard Baudrate
 
 #define REG_N_ACTUAL      0x30    //RPM actual

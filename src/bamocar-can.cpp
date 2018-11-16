@@ -3,10 +3,15 @@
 /**
  * ==========
  * Bamocar::setRxID
+ * Bamocar::setTxID
  * ==========
  */
 void Bamocar::setRxID(uint8_t rxID) {
-    _m_rxID = rxID;
+    _rxID = rxID;
+}
+
+void Bamocar::setTxID(uint8_t txID) {
+    _txID = txID;
 }
 
 /**
@@ -21,7 +26,7 @@ bool Bamocar::_sendCAN(M_data m_data) {
         sendMsg.data[i] = m_data.get(i);
     }
 
-    sendMsg.id = _m_rxID;
+    sendMsg.id = _rxID;
     sendMsg.len = m_data.length();
     sendMsg.format = CANStandard;
 

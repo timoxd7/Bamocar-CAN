@@ -77,12 +77,14 @@ class Bamocar {
         bool getHardEnable(uint8_t interval);
 
         void setRxID(uint8_t rxID);
+        void setTxID(uint8_t txID);
 
         void listenCAN();
 
     protected:
         // Receive ID of motor controller
-        uint8_t _m_rxID = STD_RX_ID;
+        uint8_t _rxID = STD_RX_ID;
+        uint8_t _txID = STD_TX_ID;
 
         // CAN-Bus
         CAN _can;
