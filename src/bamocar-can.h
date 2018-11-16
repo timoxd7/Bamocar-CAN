@@ -60,12 +60,12 @@ class Bamocar {
         // TODO Implement getters!!! (only sending commands at the moment, but not processing the answer)
 
         uint16_t getSpeed(uint8_t interval);
-        bool setSpeed(uint16_t speed);
+        bool setSpeed(int16_t speed);
 
         bool setAccel(uint16_t period);
         bool setDecel(uint16_t period);
 
-        bool setTorque(uint16_t torque);
+        bool setTorque(int16_t torque);
 
         uint8_t getCurrent(uint8_t interval);
         uint8_t getCurrentDevice(uint8_t interval);

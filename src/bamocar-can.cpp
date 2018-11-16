@@ -60,7 +60,7 @@ uint16_t Bamocar::getSpeed(uint8_t interval) {
     _sendCAN(M_data(REG_REQUEST, REG_N_ACTUAL, interval));
 }
 
-bool Bamocar::setSpeed(uint16_t speed) {
+bool Bamocar::setSpeed(int16_t speed) {
     return _sendCAN(M_data(REG_N_CMD, (speed & 0xFF), (speed >> 8)));
 }
 
@@ -72,7 +72,7 @@ bool Bamocar::setDecel(uint16_t period) {
     return _sendCAN(M_data(REG_RAMP_DEC, (period & 0xFF), (period >> 8)));
 }
 
-bool Bamocar::setTorque(uint16_t torque) {
+bool Bamocar::setTorque(int16_t torque) {
     return _sendCAN(M_data(REG_TORQUE_CMD, (torque & 0xFF), (torque >> 8)));
 }
 
