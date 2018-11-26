@@ -54,37 +54,52 @@ class Bamocar {
     public:
         Bamocar(PinName canRD, PinName canTD, int frequency = STD_BAUD_RATE)
             : _can(canRD, canTD, frequency) {
-            _can.attach(callback(this, &Bamocar::listenCAN), CAN::RxIrq);
+            _can.attach(callback(this, &Bamocar::_listenCAN), CAN::RxIrq);
+            _got.speed = 0;
+            _got.torque = 0;
+            _got.current = 0;
+            _got.currentDevice = 0;
+            _got.motorTemp = 0;
+            _got.status = 0;
+            _got.hardEnabled = false;
+
+            _rxID = STD_RX_ID;
+            _txID = STD_TX_ID;
         }
 
-        // TODO Implement getters!!! (only sending commands at the moment, but not processing the answer)
 
-        uint16_t getSpeed(uint8_t interval);
+        int16_t getSpeed();
         bool setSpeed(int16_t speed);
+        bool requestSpeed(uint8_t interval = INTVL_IMMEDIATE);
 
-        bool setAccel(uint16_t period);
-        bool setDecel(uint16_t period);
+        bool setAccel(int16_t period);
+        bool setDecel(int16_t period);
 
+        int16_t getTorque();
         bool setTorque(int16_t torque);
+        bool requestTorque(uint8_t interval = INTVL_IMMEDIATE);
 
-        uint8_t getCurrent(uint8_t interval);
-        uint8_t getCurrentDevice(uint8_t interval);
+        uint8_t getCurrent();
+        bool requestCurrent(uint8_t interval = INTVL_IMMEDIATE);
+        uint8_t getCurrentDevice();
+        bool requestCurrentDevice(uint8_t interval = INTVL_IMMEDIATE);
 
-        uint8_t getMotorTemp(uint8_t interval);
-        uint8_t getStatus(uint8_t interval);
+        uint8_t getMotorTemp();
+        bool requestMotorTemp(uint8_t interval = INTVL_IMMEDIATE);
+        uint8_t getStatus();
+        bool requestStatus(uint8_t interval = INTVL_IMMEDIATE);
 
         void setSoftEnable(bool enable);
-        bool getHardEnable(uint8_t interval);
+        bool getHardEnable();
+        bool requestHardEnabled(uint8_t interval);
 
         void setRxID(uint8_t rxID);
         void setTxID(uint8_t txID);
 
-        void listenCAN();
-
     protected:
         // Receive ID of motor controller
-        uint8_t _rxID = STD_RX_ID;
-        uint8_t _txID = STD_TX_ID;
+        uint8_t _rxID;
+        uint8_t _txID;
 
         // CAN-Bus
         CAN _can;
@@ -92,11 +107,17 @@ class Bamocar {
         // Because we get data over CAN triggering an interrupt,
         // we have to save the values in this object to be red later
         struct _got {
-            uint16_t speed, torque;
-            uint8_t current, motorTemp, status;
+            int16_t speed, torque;
+            int8_t current, currentDevice, motorTemp, status;
+            bool hardEnabled;
         } _got;
 
         bool _sendCAN(M_data m_data);
+        bool _requestData(uint8_t dataAddress, uint8_t interval = 0x0);
+        void _listenCAN();
+        bool _parseMessage(CANMessage &msg);
+        int16_t _getReceived16Bit(CANMessage &msg);
+        int32_t _getReceived32Bit(CANMessage &msg);
 };
 
 #endif
