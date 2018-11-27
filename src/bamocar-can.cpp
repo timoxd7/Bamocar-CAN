@@ -135,6 +135,7 @@ int32_t Bamocar::_getReceived32Bit(CANMessage &msg) {
 
 //----------------------------------------------------------------------------------------------
 
+// Speed
 int16_t Bamocar::getSpeed() {
     return _got.speed;
 }
@@ -147,7 +148,7 @@ bool Bamocar::requestSpeed(uint8_t interval) {
     return _requestData(REG_N_ACTUAL, interval);
 }
 
-
+// Accel
 bool Bamocar::setAccel(int16_t period) {
     return _sendCAN(M_data(REG_RAMP_ACC, (period & 0xFF), (period >> 8)));
 }
@@ -156,7 +157,7 @@ bool Bamocar::setDecel(int16_t period) {
     return _sendCAN(M_data(REG_RAMP_DEC, (period & 0xFF), (period >> 8)));
 }
 
-
+// Torque
 int16_t Bamocar::getTorque() {
     return _got.torque;
 }
@@ -169,7 +170,7 @@ bool Bamocar::requestTorque(uint8_t interval) {
     return _requestData(REG_TORQUE, interval);
 }
 
-
+// Current
 uint8_t Bamocar::getCurrent() {
     return _got.current;
 }
@@ -186,7 +187,7 @@ bool Bamocar::requestCurrentDevice(uint8_t interval) {
     return _requestData(REG_I_DEVICE, interval);
 }
 
-
+// Temperatures
 uint8_t Bamocar::getMotorTemp() {
     return _got.motorTemp;
 }
@@ -195,6 +196,23 @@ bool Bamocar::requestMotorTemp(uint8_t interval) {
     return _requestData(REG_TEMP_MOTOR, interval);
 }
 
+uint8_t Bamocar::getControllerTemp() {
+    return _got.controllerTemp;
+}
+
+bool Bamocar::requestControllerTemp(uint8_t interval) {
+    return _requestData(REG_TEMP_IGBT, interval);
+}
+
+uint8_t Bamocar::getAirTemp() {
+    return _got.airTemp;
+}
+
+bool Bamocar::requestAirTemp(uint8_t interval = INTVL_IMMEDIATE) {
+    return _requestData(REG_TEMP_AIR, interval);
+}
+
+// Status
 uint8_t Bamocar::getStatus() {
     return _got.status;
 }
@@ -203,6 +221,7 @@ bool Bamocar::requestStatus(uint8_t interval) {
     return _requestData(REG_STATUS, interval);
 }
 
+// Enable
 void Bamocar::setSoftEnable(bool enable) {
     uint8_t m_data2 = 0;
 

@@ -55,44 +55,49 @@ class Bamocar {
         Bamocar(PinName canRD, PinName canTD, int frequency = STD_BAUD_RATE)
             : _can(canRD, canTD, frequency) {
             _can.attach(callback(this, &Bamocar::_listenCAN), CAN::RxIrq);
-            _got.speed = 0;
-            _got.torque = 0;
-            _got.current = 0;
-            _got.currentDevice = 0;
-            _got.motorTemp = 0;
-            _got.status = 0;
-            _got.hardEnabled = false;
 
             _rxID = STD_RX_ID;
             _txID = STD_TX_ID;
         }
 
-
+        // Speed
         int16_t getSpeed();
         bool setSpeed(int16_t speed);
         bool requestSpeed(uint8_t interval = INTVL_IMMEDIATE);
 
+        // Still don't know what these make
         bool setAccel(int16_t period);
         bool setDecel(int16_t period);
 
+        // Torque (most important one to control the Motor)
         int16_t getTorque();
         bool setTorque(int16_t torque);
         bool requestTorque(uint8_t interval = INTVL_IMMEDIATE);
 
+        // Current (A)
         uint8_t getCurrent();
-        bool requestCurrent(uint8_t interval = INTVL_IMMEDIATE);
         uint8_t getCurrentDevice();
+        bool requestCurrent(uint8_t interval = INTVL_IMMEDIATE);
         bool requestCurrentDevice(uint8_t interval = INTVL_IMMEDIATE);
 
+        // Temperatures
         uint8_t getMotorTemp();
+        uint8_t getControllerTemp();
+        uint8_t getAirTemp();
         bool requestMotorTemp(uint8_t interval = INTVL_IMMEDIATE);
+        bool requestControllerTemp(uint8_t interval = INTVL_IMMEDIATE);
+        bool requestAirTemp(uint8_t interval = INTVL_IMMEDIATE);
+
+        // Status
         uint8_t getStatus();
         bool requestStatus(uint8_t interval = INTVL_IMMEDIATE);
 
+        // Enable
         void setSoftEnable(bool enable);
         bool getHardEnable();
         bool requestHardEnabled(uint8_t interval);
 
+        // CAN IDs (of the Motor Controller)
         void setRxID(uint8_t rxID);
         void setTxID(uint8_t txID);
 
@@ -107,9 +112,11 @@ class Bamocar {
         // Because we get data over CAN triggering an interrupt,
         // we have to save the values in this object to be red later
         struct _got {
-            int16_t speed, torque;
-            int8_t current, currentDevice, motorTemp, status;
-            bool hardEnabled;
+            int16_t speed = 0, torque = 0;
+            int8_t current = 0, currentDevice = 0,
+                   motorTemp = 0, controllerTemp = 0, airTemp = 0,
+                   status = 0;
+            bool hardEnabled = false;
         } _got;
 
         bool _sendCAN(M_data m_data);
