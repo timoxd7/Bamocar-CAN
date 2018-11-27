@@ -208,7 +208,7 @@ uint8_t Bamocar::getAirTemp() {
     return _got.airTemp;
 }
 
-bool Bamocar::requestAirTemp(uint8_t interval = INTVL_IMMEDIATE) {
+bool Bamocar::requestAirTemp(uint8_t interval) {
     return _requestData(REG_TEMP_AIR, interval);
 }
 
