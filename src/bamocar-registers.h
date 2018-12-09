@@ -30,7 +30,7 @@
 
 #define REG_TEMP_MOTOR    0x49    //Active motor temperature
 #define REG_TEMP_IGBT     0x4A    //Active output stage temperature
-#define REG_TEMP_AIR      0x48    //Air temperature in the servo
+#define REG_TEMP_AIR      0x4B    //Air temperature in the servo
 
 #define REG_HARD_ENABLED  0xE8    //Hard Enabled State
 
