@@ -6,11 +6,11 @@
  * Bamocar::setTxID
  * ==========
  */
-void Bamocar::setRxID(uint8_t rxID) {
+void Bamocar::setRxID(uint16_t rxID) {
     _rxID = rxID;
 }
 
-void Bamocar::setTxID(uint8_t txID) {
+void Bamocar::setTxID(uint16_t txID) {
     _txID = txID;
 }
 
@@ -75,33 +75,62 @@ bool Bamocar::_parseMessage(CANMessage &msg) {
         } else return false;
 
         switch (msg.data[0]) {
-            case REG_N_ACTUAL:
-                _got.speed = receivedData;
+            case REG_STATUS:
+                _got.STATUS = receivedData;
                 break;
 
-            case REG_TORQUE:
-                _got.torque = receivedData;
+            case REG_READY:
+                _got.READY = receivedData;
+                break;
+
+            case REG_N_ACTUAL:
+                _got.N_ACTUAL = receivedData;
+                break;
+
+            case REG_N_MAX:
+                _got.N_MAX = receivedData;
                 break;
 
             case REG_I_ACTUAL:
-                _got.current = receivedData;
+                _got.I_ACTUAL = receivedData;
                 break;
 
             case REG_I_DEVICE:
-                _got.currentDevice = receivedData;
+                _got.I_DEVICE = receivedData;
+                break;
+
+            case REG_I_200PC:
+                _got.I_200PC = receivedData;
+                break;
+
+            case REG_TORQUE:
+                _got.TORQUE = receivedData;
+                break;
+
+            case REG_RAMP_ACC:
+                _got.RAMP_ACC = receivedData;
+                break;
+
+            case REG_RAMP_DEC:
+                _got.RAMP_DEC = receivedData;
                 break;
 
             case REG_TEMP_MOTOR:
-                _got.currentDevice = receivedData;
+                _got.TEMP_MOTOR = receivedData;
                 break;
 
-            case REG_STATUS:
-                _got.status = receivedData;
+            case REG_TEMP_IGBT:
+                _got.TEMP_IGBT = receivedData;
+                break;
+
+            case REG_TEMP_AIR:
+                _got.TEMP_AIR = receivedData;
                 break;
 
             case REG_HARD_ENABLED:
-                _got.hardEnabled = receivedData;
+                _got.HARD_ENABLED = receivedData;
                 break;
+
 
             default:
                 return false;
@@ -136,34 +165,45 @@ int32_t Bamocar::_getReceived32Bit(CANMessage &msg) {
 //----------------------------------------------------------------------------------------------
 
 // Speed
-int16_t Bamocar::getSpeed() {
-    return _got.speed;
+float Bamocar::getSpeed() {
+    return _got.N_MAX * (_got.N_ACTUAL / 32767);
 }
 
 bool Bamocar::setSpeed(int16_t speed) {
-    return _sendCAN(M_data(REG_N_CMD, (speed & 0xFF), (speed >> 8)));
+    return _sendCAN(M_data(REG_N_CMD, (int16_t)speed));
 }
 
 bool Bamocar::requestSpeed(uint8_t interval) {
-    return _requestData(REG_N_ACTUAL, interval);
+    bool success = true;
+    if (!_requestData(REG_N_ACTUAL, interval))
+        success = false;
+
+    if (!_requestData(REG_N_MAX, interval))
+        success = false;
+
+    return success;
 }
 
 // Accel
-bool Bamocar::setAccel(int16_t period) {
-    return _sendCAN(M_data(REG_RAMP_ACC, (period & 0xFF), (period >> 8)));
+bool Bamocar::setAccel(int16_t accel) {
+    return _sendCAN(M_data(REG_RAMP_ACC, (int16_t)accel));
 }
 
-bool Bamocar::setDecel(int16_t period) {
-    return _sendCAN(M_data(REG_RAMP_DEC, (period & 0xFF), (period >> 8)));
+bool Bamocar::setDecel(int16_t decel) {
+    return _sendCAN(M_data(REG_RAMP_DEC, (int16_t)decel));
 }
 
 // Torque
-int16_t Bamocar::getTorque() {
-    return _got.torque;
+float Bamocar::getTorque() {
+    return _got.TORQUE/0x5555;
 }
 
-bool Bamocar::setTorque(int16_t torque) {
-    return _sendCAN(M_data(REG_TORQUE, (torque & 0xFF), (torque >> 8)));
+bool Bamocar::setTorque(float torque) {
+    if (torque > TORQUE_MAX_PERCENT)
+        torque = TORQUE_MAX_PERCENT;
+
+    int16_t torque16 = torque * 0x5555;
+    return _sendCAN(M_data(REG_TORQUE, (int16_t)torque16));
 }
 
 bool Bamocar::requestTorque(uint8_t interval) {
@@ -171,41 +211,43 @@ bool Bamocar::requestTorque(uint8_t interval) {
 }
 
 // Current
-uint8_t Bamocar::getCurrent() {
-    return _got.current;
+float Bamocar::getCurrent() {
+    return ((2/10) * _got.I_DEVICE * (_got.I_ACTUAL / _got.I_200PC));
 }
 
 bool Bamocar::requestCurrent(uint8_t interval) {
-    return _requestData(REG_I_ACTUAL, interval);
-}
+    bool success = true;
+    if (!_requestData(REG_I_ACTUAL, interval))
+        success = false;
 
-uint8_t Bamocar::getCurrentDevice() {
-    return _got.currentDevice;
-}
+    if (!_requestData(REG_I_DEVICE, interval))
+        success = false;
 
-bool Bamocar::requestCurrentDevice(uint8_t interval) {
-    return _requestData(REG_I_DEVICE, interval);
+    if (!_requestData(REG_I_200PC, interval))
+        success = false;
+
+    return success;
 }
 
 // Temperatures
-uint8_t Bamocar::getMotorTemp() {
-    return _got.motorTemp;
+uint16_t Bamocar::getMotorTemp() {
+    return _got.TEMP_MOTOR;
 }
 
 bool Bamocar::requestMotorTemp(uint8_t interval) {
     return _requestData(REG_TEMP_MOTOR, interval);
 }
 
-uint8_t Bamocar::getControllerTemp() {
-    return _got.controllerTemp;
+uint16_t Bamocar::getControllerTemp() {
+    return _got.TEMP_IGBT;
 }
 
 bool Bamocar::requestControllerTemp(uint8_t interval) {
     return _requestData(REG_TEMP_IGBT, interval);
 }
 
-uint8_t Bamocar::getAirTemp() {
-    return _got.airTemp;
+uint16_t Bamocar::getAirTemp() {
+    return _got.TEMP_AIR;
 }
 
 bool Bamocar::requestAirTemp(uint8_t interval) {
@@ -213,8 +255,8 @@ bool Bamocar::requestAirTemp(uint8_t interval) {
 }
 
 // Status
-uint8_t Bamocar::getStatus() {
-    return _got.status;
+uint16_t Bamocar::getStatus() {
+    return _got.STATUS;
 }
 
 bool Bamocar::requestStatus(uint8_t interval) {
@@ -235,7 +277,7 @@ void Bamocar::setSoftEnable(bool enable) {
 }
 
 bool Bamocar::getHardEnable() {
-    return _got.hardEnabled;
+    return _got.HARD_ENABLED;
 }
 
 bool Bamocar::requestHardEnabled(uint8_t interval) {
